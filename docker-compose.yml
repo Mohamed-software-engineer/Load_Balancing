@@ -1,0 +1,78 @@
+version: "3.9"
+
+services:
+  loadmanager:
+    build:
+      context: ./LoadManager
+      dockerfile: Dockerfile
+    container_name: loadmanager
+    ports:
+      - "8090:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+    depends_on:
+      - node1
+      - node2
+      - node3
+      - node4
+      - node5
+
+  node1:
+    build:
+      context: ./NodeServer
+      dockerfile: Dockerfile
+    container_name: node1
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - NODE_ID=node1
+      - NODE_NAME=Node Server 1
+
+  node2:
+    build:
+      context: ./NodeServer
+      dockerfile: Dockerfile
+    container_name: node2
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - NODE_ID=node2
+      - NODE_NAME=Node Server 2
+
+  node3:
+    build:
+      context: ./NodeServer
+      dockerfile: Dockerfile
+    container_name: node3
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - NODE_ID=node3
+      - NODE_NAME=Node Server 3
+
+  node4:
+    build:
+      context: ./NodeServer
+      dockerfile: Dockerfile
+    container_name: node4
+    ports:
+      - "5004:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - NODE_ID=node4
+      - NODE_NAME=Node Server 4
+
+  node5:
+    build:
+      context: ./NodeServer
+      dockerfile: Dockerfile
+    container_name: node5
+    ports:
+      - "5005:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - NODE_ID=node5
+      - NODE_NAME=Node Server 5
