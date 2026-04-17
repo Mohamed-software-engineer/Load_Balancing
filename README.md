@@ -226,4 +226,4 @@ Built a .NET-based load balancing simulation system with a Load Manager and mult
 **Mohamed Saad**
 
 * GitHub: `Mohamed-software-engineer`
-* LinkedIn: add your profile link here
+* LinkedIn: www.linkedin.com/in/mohamed-saad-engineering
