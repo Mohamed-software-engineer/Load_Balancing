@@ -1,23 +1,67 @@
 #!/bin/bash
 
+set -e
+
 BASE_URL="http://localhost:8090/LoadBalancer/cal?n=1"
 METRICS_URL="http://localhost:8090/Metrics"
 RESET_URL="http://localhost:8090/Metrics/reset"
+NODES_URL="http://localhost:8090/Nodes"
+
+REQUESTS=10000
+CONCURRENCY=200
+ALGORITHMS=("rr" "random" "wrr" "lc" "hash")
 
 mkdir -p results
 
-algorithms=("rr" "random" "wrr" "lc" "hash")
+echo "Starting Docker containers..."
+docker-compose up --build -d
 
-for algo in "${algorithms[@]}"
+echo "Waiting for services to be ready..."
+sleep 8
+
+echo "Checking services..."
+curl -s "$NODES_URL" > /dev/null
+
+for algo in "${ALGORITHMS[@]}"
 do
-  echo "Running test for $algo ..."
+  echo ""
+  echo "========================================"
+  echo "Running benchmark for: $algo"
+  echo "========================================"
 
-  curl -X POST "$RESET_URL"
+  curl -s -X POST "$RESET_URL" > /dev/null
 
-  ab -n 10000 -c 200 "${BASE_URL}&algo=${algo}" > "results/${algo}-ab.txt"
+  CPU_FILE="results/${algo}-cpu.csv"
+  AB_FILE="results/${algo}-ab.txt"
+  METRICS_FILE="results/${algo}-metrics.json"
 
-  curl "$METRICS_URL" > "results/${algo}-metrics.json"
+  echo "Starting Docker CPU sampler..."
+  ./sample_docker_stats.sh "$CPU_FILE" 1 &
+  SAMPLER_PID=$!
 
-  echo "Finished $algo"
-  echo "-------------------------"
+  sleep 1
+
+  echo "Running ApacheBench..."
+  ab -n $REQUESTS -c $CONCURRENCY "${BASE_URL}&algo=${algo}" > "$AB_FILE"
+
+  echo "Stopping Docker CPU sampler..."
+  kill $SAMPLER_PID || true
+  wait $SAMPLER_PID 2>/dev/null || true
+
+  curl -s "$METRICS_URL" > "$METRICS_FILE"
+
+  echo "Saved:"
+  echo "  $AB_FILE"
+  echo "  $CPU_FILE"
+  echo "  $METRICS_FILE"
 done
+
+echo ""
+echo "Generating comparison report..."
+python3 compare_results.py
+
+echo ""
+echo "Done."
+echo "Check:"
+echo "  results/summary.txt"
+echo "  results/summary.csv"
